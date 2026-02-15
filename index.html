@@ -263,6 +263,110 @@
       font-size: 13px;
     }
 
+    
+    /* Pretty dropdown menu (replaces the native select popup) */
+    .pill.select.dropdown{ position: relative; cursor: pointer; }
+
+    .format-btn{
+      border: none;
+      background: transparent;
+      color: var(--text);
+      padding: 0;
+      margin: 0;
+      outline: none;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1;
+
+      /* Make the whole pill easier to click: button grows to fill the pill */
+      flex: 1 1 auto;
+      min-width: 0;
+      height: 100%;
+      display: inline-flex;
+      align-items: center;
+    }
+    .format-btn:focus{ outline: none; }
+
+    .format-menu{
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 0;
+      min-width: 180px;
+      padding: 8px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(18, 22, 34, .98);
+      box-shadow: var(--shadow);
+      z-index: 50;
+      transform: translateY(-2px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .12s ease, transform .12s ease;
+    }
+    .pill.select.dropdown.open .format-menu{
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .pill.select.dropdown.open::after{
+      transform: translateY(-50%) rotate(180deg);
+      color: rgba(255,255,255,.78);
+    }
+
+    .format-opt{
+      width: 100%;
+      height: 36px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: rgba(255,255,255,.88);
+      font-family: var(--mono);
+      font-size: 13px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 0 10px;
+      cursor:pointer;
+    }
+    .format-opt:hover{ background: rgba(255,255,255,.08); }
+    .format-opt:focus{
+      outline:none;
+      box-shadow: 0 0 0 4px var(--focus);
+      border-color: rgba(133,185,255,.35);
+    }
+    .format-opt[aria-selected="true"]{
+      background: rgba(133,185,255,.18);
+      border-color: rgba(133,185,255,.30);
+      color: rgba(255,255,255,.95);
+    }
+    .format-opt[aria-selected="true"]::after{
+      content: "✓";
+      color: rgba(133,185,255,.95);
+      font-weight: 800;
+    }
+
+    /* Drag & drop reorder for stops */
+    body.dragging{ user-select: none; }
+
+    .stop .drag-handle{
+      cursor: grab;
+      touch-action: none;
+    }
+    .stop .drag-handle:active{ cursor: grabbing; }
+
+    .stop.dragging{
+      opacity: .92;
+      border-color: rgba(133,185,255,.35);
+      background: rgba(0,0,0,.22);
+      box-shadow: 0 18px 50px rgba(0,0,0,.55);
+    }
+    .stop.placeholder{
+      border-style: dashed;
+      background: rgba(0,0,0,.06);
+    }
+
+
     /* Stops list */
     .stops{
       display:grid;
@@ -505,6 +609,263 @@
     toastTimer = setTimeout(() => els.toast.classList.remove("show"), 900);
   }
 
+  function setupFormatDropdown(){
+    const select = els.formatSelect;
+    if (!select) return;
+
+    const host = select.closest(".pill.select");
+    if (!host) return;
+
+    // Avoid double init
+    if (host.querySelector(".format-btn")) return;
+
+    host.classList.add("dropdown");
+    // Keep the real <select> for accessibility, but hide it visually
+    select.classList.add("sr-only");
+    select.setAttribute("aria-hidden", "true");
+    select.tabIndex = -1;
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "format-btn";
+    btn.setAttribute("aria-haspopup", "listbox");
+    btn.setAttribute("aria-expanded", "false");
+
+    const menu = document.createElement("div");
+    menu.className = "format-menu";
+    menu.setAttribute("role", "listbox");
+    menu.setAttribute("aria-label", "Output format");
+    menu.setAttribute("aria-hidden", "true");
+
+    const optionBtns = [];
+    [...select.options].forEach((opt) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "format-opt";
+      b.setAttribute("role", "option");
+      b.dataset.value = opt.value;
+      b.textContent = opt.textContent;
+      optionBtns.push(b);
+      menu.appendChild(b);
+    });
+
+    function isOpen(){ return host.classList.contains("open"); }
+
+    function syncFromSelect(){
+      btn.textContent = select.options[select.selectedIndex]?.textContent || "Format";
+      optionBtns.forEach((b) => {
+        const sel = b.dataset.value === select.value;
+        b.setAttribute("aria-selected", sel ? "true" : "false");
+        // Prevent focusing hidden options when the menu is closed
+        b.tabIndex = isOpen() ? (sel ? 0 : -1) : -1;
+      });
+    }
+
+    function openMenu(){
+      host.classList.add("open");
+      btn.setAttribute("aria-expanded", "true");
+      menu.setAttribute("aria-hidden", "false");
+      syncFromSelect();
+      (optionBtns.find(b => b.dataset.value === select.value) || optionBtns[0])?.focus();
+    }
+
+    function closeMenu({ focusButton = true } = {}){
+      host.classList.remove("open");
+      btn.setAttribute("aria-expanded", "false");
+      menu.setAttribute("aria-hidden", "true");
+      // When closed, ensure options aren't tabbable
+      optionBtns.forEach(b => b.tabIndex = -1);
+
+      if (focusButton){
+        btn.focus({ preventScroll: true });
+      } else if (menu.contains(document.activeElement)) {
+        // Avoid leaving focus on hidden menu options
+        document.activeElement.blur();
+      }
+    }
+
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (isOpen()) closeMenu({ focusButton: false });
+      else openMenu();
+    });
+
+    // Make the entire pill clickable (label/empty space/chevron area),
+    // not just the button text.
+    host.addEventListener("click", (e) => {
+      if (e.target.closest(".format-menu")) return;
+      if (e.target.closest(".format-btn")) return; // button handles itself
+      if (isOpen()) closeMenu({ focusButton: false });
+      else openMenu();
+    });
+
+    btn.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " "){
+        e.preventDefault();
+        openMenu();
+      }
+    });
+
+    menu.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const b = e.target.closest(".format-opt");
+      if (!b) return;
+      const val = b.dataset.value;
+      if (val){
+        select.value = val;
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      closeMenu();
+    });
+
+    menu.addEventListener("keydown", (e) => {
+      const current = document.activeElement;
+      const idx = optionBtns.indexOf(current);
+      if (e.key === "Escape"){
+        e.preventDefault();
+        closeMenu();
+      } else if (e.key === "ArrowDown"){
+        e.preventDefault();
+        optionBtns[Math.min(optionBtns.length - 1, Math.max(0, idx) + 1)]?.focus();
+      } else if (e.key === "ArrowUp"){
+        e.preventDefault();
+        optionBtns[Math.max(0, Math.max(0, idx) - 1)]?.focus();
+      } else if (e.key === "Home"){
+        e.preventDefault();
+        optionBtns[0]?.focus();
+      } else if (e.key === "End"){
+        e.preventDefault();
+        optionBtns[optionBtns.length - 1]?.focus();
+      } else if (e.key === "Enter" || e.key === " "){
+        e.preventDefault();
+        if (current && current.classList.contains("format-opt")) current.click();
+      }
+    });
+
+    // Close when clicking outside
+    document.addEventListener("pointerdown", (e) => {
+      if (!isOpen()) return;
+      if (!host.contains(e.target)) closeMenu({ focusButton: false });
+    });
+
+    // Keep in sync if assistive tech changes the real <select>
+    select.addEventListener("change", syncFromSelect);
+
+    syncFromSelect();
+    host.appendChild(btn);
+    host.appendChild(menu);
+  }
+
+  function setupStopDragAndDrop(){
+    let state = null;
+
+    function listItems(){
+      return [...els.stops.querySelectorAll(".stop:not(.dragging):not(.placeholder)")];
+    }
+
+    function getAfterElement(y){
+      let closest = { offset: Number.NEGATIVE_INFINITY, element: null };
+      for (const el of listItems()){
+        const box = el.getBoundingClientRect();
+        const offset = y - (box.top + box.height / 2);
+        if (offset < 0 && offset > closest.offset){
+          closest = { offset, element: el };
+        }
+      }
+      return closest.element;
+    }
+
+    function cleanup(commit){
+      if (!state) return;
+
+      const { item, placeholder } = state;
+
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+
+      if (commit){
+        els.stops.insertBefore(item, placeholder);
+      }
+      placeholder.remove();
+
+      item.classList.remove("dragging");
+      item.style.position = "";
+      item.style.left = "";
+      item.style.top = "";
+      item.style.width = "";
+      item.style.zIndex = "";
+      item.style.pointerEvents = "";
+
+      document.body.classList.remove("dragging");
+
+      state = null;
+      renumberStops();
+      update();
+    }
+
+    function onMove(e){
+      if (!state || e.pointerId !== state.pointerId) return;
+      state.item.style.top = (e.clientY - state.offsetY) + "px";
+
+      const after = getAfterElement(e.clientY);
+      if (!after) els.stops.appendChild(state.placeholder);
+      else els.stops.insertBefore(state.placeholder, after);
+    }
+
+    function onUp(e){
+      if (!state || e.pointerId !== state.pointerId) return;
+      cleanup(true);
+    }
+
+    els.stops.addEventListener("pointerdown", (e) => {
+      const handle = e.target.closest(".drag-handle");
+      if (!handle) return;
+
+      const item = handle.closest(".stop");
+      if (!item) return;
+
+      // Primary button only (left click / touch)
+      if (e.button !== undefined && e.button !== 0) return;
+
+      // Don't start another drag while one is active
+      if (state) return;
+
+      e.preventDefault();
+
+      const rect = item.getBoundingClientRect();
+      const placeholder = document.createElement("div");
+      placeholder.className = "stop placeholder";
+      placeholder.style.height = rect.height + "px";
+      placeholder.setAttribute("aria-hidden", "true");
+
+      // Put placeholder right where the item was
+      els.stops.insertBefore(placeholder, item.nextSibling);
+
+      item.classList.add("dragging");
+      document.body.classList.add("dragging");
+
+      item.style.position = "fixed";
+      item.style.left = rect.left + "px";
+      item.style.top = rect.top + "px";
+      item.style.width = rect.width + "px";
+      item.style.zIndex = "9999";
+      item.style.pointerEvents = "none";
+
+      state = {
+        pointerId: e.pointerId,
+        item,
+        placeholder,
+        offsetY: e.clientY - rect.top,
+      };
+
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointercancel", onUp);
+    });
+  }
+
   function clamp01(x){ return Math.max(0, Math.min(1, x)); }
 
   function normalizeHex(input){
@@ -614,7 +975,7 @@
   }
 
   function getStops(){
-    const nodes = [...els.stops.querySelectorAll(".stop")];
+    const nodes = [...els.stops.querySelectorAll(".stop:not(.placeholder)")];
     const stops = nodes.map(n => {
       const hexEl = n.querySelector('input[type="text"].hex');
       const typed = normalizeHex(hexEl.value);
@@ -631,6 +992,7 @@
     const div = document.createElement("div");
     div.className = "stop";
     div.innerHTML = `
+      <button class="btn icon drag-handle" type="button" title="Drag to reorder" aria-label="Drag to reorder">⠿</button>
       <span class="name">Stop ${idx}</span>
       <input type="color" value="${safe}" aria-label="Color picker"/>
       <input type="text" class="hex" value="${safe}" spellcheck="false" aria-label="Hex color"/>
@@ -642,9 +1004,9 @@
 
     const color = div.querySelector('input[type="color"]');
     const hexIn = div.querySelector('input[type="text"].hex');
-    const upBtn = div.querySelectorAll("button")[0];
-    const downBtn = div.querySelectorAll("button")[1];
-    const rmBtn = div.querySelectorAll("button")[2];
+    const upBtn = div.querySelector('button[aria-label="Move up"]');
+    const downBtn = div.querySelector('button[aria-label="Move down"]');
+    const rmBtn = div.querySelector('button[aria-label="Remove"]');
 
     hexIn.dataset.lastValid = safe;
 
@@ -876,7 +1238,11 @@
     els.textInput.focus();
   }
 
-  // Events
+    // Enhance UI
+  setupFormatDropdown();
+  setupStopDragAndDrop();
+
+// Events
   els.textInput.addEventListener("input", update);
   els.formatSelect.addEventListener("change", update);
   els.includeSpaces.addEventListener("change", update);
