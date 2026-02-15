@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Gradient BBCode Generator</title>
-  <meta name="description" content="Generate per-character multi-color gradient BBCode for XenForo." />
+  <meta name="description" content="Generate per-character multi-color gradient BBCode." />
   <style>
     :root{
       --bg: #0b0f19;
@@ -406,6 +406,200 @@
       border-radius: 10px;
     }
 
+
+/* Custom swatch button + themed popover color picker */
+.swatch-btn{
+  width: 44px;
+  height: 32px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(0,0,0,.16);
+  padding: 0;
+  cursor:pointer;
+  overflow:hidden;
+  position: relative;
+  flex: 0 0 auto;
+  transition: transform .05s ease, background .15s ease, border-color .15s ease;
+}
+.swatch-btn::before{
+  content:"";
+  position:absolute;
+  inset: 3px;
+  border-radius: 10px;
+  background: var(--swatch, #85B9FF);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.25);
+}
+.swatch-btn:hover{
+  background: rgba(255,255,255,.07);
+  border-color: rgba(255,255,255,.18);
+}
+.swatch-btn:active{ transform: translateY(1px); }
+.swatch-btn:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 4px var(--focus);
+  border-color: rgba(133,185,255,.35);
+}
+
+.cp-pop{
+  position: fixed;
+  width: 272px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(18,22,34,.98);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+  z-index: 10000;
+  display: none;
+  transform-origin: top left;
+}
+.cp-pop.open{ display:block; animation: cpIn .12s ease; }
+@keyframes cpIn{
+  from{ opacity: 0; transform: translateY(-6px) scale(.985); }
+  to{ opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.cp-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.cp-title{
+  font-size: 12px;
+  color: rgba(255,255,255,.78);
+  font-weight: 650;
+  letter-spacing: .2px;
+}
+.cp-done{
+  height: 32px;
+  border-radius: 12px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.9);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 650;
+  transition: background .15s ease, transform .05s ease, border-color .15s ease;
+}
+.cp-done:hover{ background: rgba(255,255,255,.12); }
+.cp-done:active{ transform: translateY(1px); }
+.cp-done:focus-visible{
+  outline:none;
+  box-shadow: 0 0 0 4px var(--focus);
+  border-color: rgba(133,185,255,.35);
+}
+
+.cp-sv{
+  position: relative;
+  width: 100%;
+  height: 156px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  overflow: hidden;
+  background: hsl(var(--cp-h, 210) 100% 50%);
+  touch-action: none;
+}
+.cp-sv .cp-white{
+  position:absolute;
+  inset:0;
+  background: linear-gradient(to right, rgba(255,255,255,1), rgba(255,255,255,0));
+}
+.cp-sv .cp-black{
+  position:absolute;
+  inset:0;
+  background: linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0));
+}
+.cp-cursor{
+  position:absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  transform: translate(-8px, -8px);
+  border: 2px solid rgba(255,255,255,.92);
+  box-shadow: 0 6px 18px rgba(0,0,0,.55), 0 0 0 1px rgba(0,0,0,.55);
+  pointer-events: none;
+}
+
+.cp-row{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  margin-top: 10px;
+}
+.cp-hue{
+  width: 100%;
+  height: 12px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right,
+    rgb(255,0,0), rgb(255,255,0), rgb(0,255,0), rgb(0,255,255),
+    rgb(0,0,255), rgb(255,0,255), rgb(255,0,0));
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12);
+  outline: none;
+}
+.cp-hue::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(255,255,255,.95);
+  background: rgba(18,22,34,.9);
+  box-shadow: 0 6px 18px rgba(0,0,0,.55);
+  cursor: pointer;
+}
+.cp-hue::-moz-range-thumb{
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 2px solid rgba(255,255,255,.95);
+  background: rgba(18,22,34,.9);
+  box-shadow: 0 6px 18px rgba(0,0,0,.55);
+  cursor: pointer;
+}
+.cp-hue:focus-visible{
+  box-shadow: 0 0 0 4px var(--focus);
+  border-color: rgba(133,185,255,.35);
+}
+
+.cp-mini{
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: var(--cp-hex, #85B9FF);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.25);
+  flex: 0 0 auto;
+}
+input.cp-hex{
+  flex: 1 1 auto;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(0,0,0,.16);
+  color: var(--text);
+  padding: 0 10px;
+  outline:none;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+input.cp-hex:focus{
+  box-shadow: 0 0 0 4px var(--focus);
+  border-color: rgba(133,185,255,.35);
+}
+input.cp-hex.invalid{
+  border-color: rgba(255,77,109,.55);
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .cp-pop.open{ animation:none; }
+  .swatch-btn, .cp-done{ transition:none; }
+}
+
     input[type="text"].hex{
       width: 120px;
       height: 32px;
@@ -512,7 +706,7 @@
             <div class="pill select" title="Choose the BBCode color format">
               <span class="label">Format</span>
               <select id="formatSelect" class="format" aria-label="Output format">
-                <option value="hex" selected>HEX (XenForo)</option>
+                <option value="hex" selected>HEX</option>
                 <option value="rgb">RGB</option>
               </select>
             </div>
@@ -892,6 +1086,274 @@
     return "#" + [c.r, c.g, c.b].map(x => x.toString(16).padStart(2,"0")).join("").toUpperCase();
   }
 
+function rgbToHsv(c){
+  const R = c.r / 255;
+  const G = c.g / 255;
+  const B = c.b / 255;
+
+  const max = Math.max(R, G, B);
+  const min = Math.min(R, G, B);
+  const d = max - min;
+
+  let h = 0;
+  if (d === 0) h = 0;
+  else if (max === R) h = 60 * (((G - B) / d) % 6);
+  else if (max === G) h = 60 * (((B - R) / d) + 2);
+  else h = 60 * (((R - G) / d) + 4);
+
+  if (h < 0) h += 360;
+
+  const s = max === 0 ? 0 : d / max;
+  const v = max;
+
+  return { h, s, v };
+}
+
+function hsvToRgb(h, s, v){
+  h = ((h % 360) + 360) % 360;
+  s = clamp01(s);
+  v = clamp01(v);
+
+  const c = v * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = v - c;
+
+  let r1 = 0, g1 = 0, b1 = 0;
+  if (h < 60){ r1 = c; g1 = x; b1 = 0; }
+  else if (h < 120){ r1 = x; g1 = c; b1 = 0; }
+  else if (h < 180){ r1 = 0; g1 = c; b1 = x; }
+  else if (h < 240){ r1 = 0; g1 = x; b1 = c; }
+  else if (h < 300){ r1 = x; g1 = 0; b1 = c; }
+  else { r1 = c; g1 = 0; b1 = x; }
+
+  return {
+    r: Math.round((r1 + m) * 255),
+    g: Math.round((g1 + m) * 255),
+    b: Math.round((b1 + m) * 255),
+  };
+}
+
+const colorPicker = (() => {
+  const pop = document.createElement("div");
+  pop.className = "cp-pop";
+  pop.id = "colorPopover";
+  pop.setAttribute("role", "dialog");
+  pop.setAttribute("aria-label", "Color picker");
+  pop.setAttribute("aria-hidden", "true");
+
+  pop.innerHTML = `
+    <div class="cp-top">
+      <div class="cp-title">Pick a color</div>
+      <button type="button" class="cp-done">Done</button>
+    </div>
+
+    <div class="cp-sv" tabindex="0" aria-label="Saturation and brightness">
+      <div class="cp-white"></div>
+      <div class="cp-black"></div>
+      <div class="cp-cursor" aria-hidden="true"></div>
+    </div>
+
+    <div class="cp-row">
+      <input class="cp-hue" type="range" min="0" max="360" value="210" aria-label="Hue"/>
+    </div>
+
+    <div class="cp-row">
+      <div class="cp-mini" aria-hidden="true"></div>
+      <input class="cp-hex" type="text" spellcheck="false" aria-label="Hex color"/>
+    </div>
+  `;
+
+  document.body.appendChild(pop);
+
+  const sv = pop.querySelector(".cp-sv");
+  const cursor = pop.querySelector(".cp-cursor");
+  const hue = pop.querySelector(".cp-hue");
+  const hex = pop.querySelector(".cp-hex");
+  const mini = pop.querySelector(".cp-mini");
+  const done = pop.querySelector(".cp-done");
+
+  let active = null; // { swatchBtn, hexInput }
+  let hsv = { h: 210, s: 0.55, v: 1 };
+
+  function isOpen(){ return pop.classList.contains("open"); }
+
+  function clampIntoViewport(x, y, w, h, pad = 12){
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    x = Math.max(pad, Math.min(vw - w - pad, x));
+    y = Math.max(pad, Math.min(vh - h - pad, y));
+    return { x, y };
+  }
+
+  function position(anchorEl){
+    const a = anchorEl.getBoundingClientRect();
+    const w = pop.offsetWidth;
+    const h = pop.offsetHeight;
+
+    // Prefer below; if not enough space, flip above
+    let x = a.left;
+    let y = a.bottom + 10;
+    if (y + h + 12 > window.innerHeight){
+      y = a.top - h - 10;
+    }
+
+    const p = clampIntoViewport(x, y, w, h);
+    pop.style.left = p.x + "px";
+    pop.style.top = p.y + "px";
+  }
+
+  function writeToActive(hexOut){
+    if (!active) return;
+    active.hexInput.value = hexOut;
+    active.hexInput.dataset.lastValid = hexOut;
+    active.hexInput.classList.remove("invalid");
+    active.swatchBtn.style.setProperty("--swatch", hexOut);
+    update();
+  }
+
+  function syncUi({ updateHexField = true } = {}){
+    pop.style.setProperty("--cp-h", hsv.h.toFixed(2));
+
+    const rect = sv.getBoundingClientRect();
+    const x = hsv.s * rect.width;
+    const y = (1 - hsv.v) * rect.height;
+    cursor.style.left = x + "px";
+    cursor.style.top = y + "px";
+
+    const hexOut = rgbToHex(hsvToRgb(hsv.h, hsv.s, hsv.v));
+    pop.style.setProperty("--cp-hex", hexOut);
+    mini.style.background = hexOut;
+
+    if (updateHexField){
+      hex.value = hexOut;
+      hex.classList.remove("invalid");
+    }
+
+    writeToActive(hexOut);
+  }
+
+  function setFromHex(h){
+    const rgb = hexToRgb(h);
+    if (!rgb) return;
+
+    const t = rgbToHsv(rgb);
+    hsv = { h: t.h, s: t.s, v: t.v };
+    hue.value = String(Math.round(hsv.h));
+
+    // Wait a frame so the SV rect is accurate after positioning
+    requestAnimationFrame(() => syncUi({ updateHexField: true }));
+  }
+
+  function open(anchorEl, hexInput){
+    active = { swatchBtn: anchorEl, hexInput };
+
+    const initial =
+      normalizeHex(hexInput.value) ||
+      normalizeHex(hexInput.dataset.lastValid) ||
+      "#85B9FF";
+
+    pop.classList.add("open");
+    pop.setAttribute("aria-hidden", "false");
+
+    requestAnimationFrame(() => {
+      position(anchorEl);
+      setFromHex(initial);
+      sv.focus({ preventScroll: true });
+    });
+  }
+
+  function close(){
+    pop.classList.remove("open");
+    pop.setAttribute("aria-hidden", "true");
+    active = null;
+  }
+
+  function setSVFromEvent(e){
+    const r = sv.getBoundingClientRect();
+    hsv.s = clamp01((e.clientX - r.left) / r.width);
+    hsv.v = clamp01(1 - (e.clientY - r.top) / r.height);
+    syncUi({ updateHexField: true });
+  }
+
+  // SV square drag
+  sv.addEventListener("pointerdown", (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault();
+
+    sv.setPointerCapture(e.pointerId);
+    setSVFromEvent(e);
+
+    const onMove = (ev) => {
+      if (ev.pointerId !== e.pointerId) return;
+      setSVFromEvent(ev);
+    };
+    const onUp = (ev) => {
+      if (ev.pointerId !== e.pointerId) return;
+      try{ sv.releasePointerCapture(e.pointerId); } catch {}
+      sv.removeEventListener("pointermove", onMove);
+      sv.removeEventListener("pointerup", onUp);
+      sv.removeEventListener("pointercancel", onUp);
+    };
+
+    sv.addEventListener("pointermove", onMove);
+    sv.addEventListener("pointerup", onUp);
+    sv.addEventListener("pointercancel", onUp);
+  });
+
+  // Keyboard on SV square
+  sv.addEventListener("keydown", (e) => {
+    const step = e.shiftKey ? 0.05 : 0.015;
+    if (e.key === "ArrowLeft"){ e.preventDefault(); hsv.s = clamp01(hsv.s - step); syncUi(); }
+    else if (e.key === "ArrowRight"){ e.preventDefault(); hsv.s = clamp01(hsv.s + step); syncUi(); }
+    else if (e.key === "ArrowUp"){ e.preventDefault(); hsv.v = clamp01(hsv.v + step); syncUi(); }
+    else if (e.key === "ArrowDown"){ e.preventDefault(); hsv.v = clamp01(hsv.v - step); syncUi(); }
+  });
+
+  // Hue slider
+  hue.addEventListener("input", () => {
+    hsv.h = +hue.value;
+    syncUi({ updateHexField: true });
+  });
+
+  // Manual hex typing inside picker
+  hex.addEventListener("input", () => {
+    const h = normalizeHex(hex.value);
+    if (!h){
+      hex.classList.add("invalid");
+      return;
+    }
+    hex.classList.remove("invalid");
+    setFromHex(h);
+  });
+
+  done.addEventListener("click", close);
+
+  // Close on click outside / escape
+  document.addEventListener("pointerdown", (e) => {
+    if (!isOpen()) return;
+    if (pop.contains(e.target)) return;
+    if (active && (e.target === active.swatchBtn || active.swatchBtn.contains(e.target))) return;
+    close();
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && isOpen()){
+      e.preventDefault();
+      close();
+    }
+  });
+
+  // If layout changes while open, reposition
+  window.addEventListener("resize", () => {
+    if (isOpen() && active) position(active.swatchBtn);
+  });
+  window.addEventListener("scroll", () => {
+    if (isOpen()) close();
+  }, true);
+
+  return { open, close };
+})();
+
   function lerp(a,b,t){ return a + (b - a) * t; }
   function lerpRgb(c1, c2, t){
     return {
@@ -994,7 +1456,7 @@
     div.innerHTML = `
       <button class="btn icon drag-handle" type="button" title="Drag to reorder" aria-label="Drag to reorder">⠿</button>
       <span class="name">Stop ${idx}</span>
-      <input type="color" value="${safe}" aria-label="Color picker"/>
+      <button class="swatch-btn" type="button" title="Pick color" aria-label="Pick color" style="--swatch:${safe}"></button>
       <input type="text" class="hex" value="${safe}" spellcheck="false" aria-label="Hex color"/>
       <span class="spacer"></span>
       <button class="btn icon" type="button" title="Move up" aria-label="Move up">↑</button>
@@ -1002,25 +1464,23 @@
       <button class="btn icon" type="button" title="Remove" aria-label="Remove">✕</button>
     `;
 
-    const color = div.querySelector('input[type="color"]');
+    const swatch = div.querySelector('.swatch-btn');
     const hexIn = div.querySelector('input[type="text"].hex');
     const upBtn = div.querySelector('button[aria-label="Move up"]');
     const downBtn = div.querySelector('button[aria-label="Move down"]');
     const rmBtn = div.querySelector('button[aria-label="Remove"]');
 
     hexIn.dataset.lastValid = safe;
+    setSwatch(safe);
 
-    function syncFromColor(){
-      const v = color.value.toUpperCase();
-      hexIn.value = v;
-      hexIn.dataset.lastValid = v;
-      hexIn.classList.remove("invalid");
-      update();
+    function setSwatch(hex){
+      swatch.style.setProperty("--swatch", hex);
+      swatch.setAttribute("aria-label", `Pick color ${hex}`);
     }
     function syncFromHex(){
       const h = normalizeHex(hexIn.value);
       if (h){
-        color.value = h;
+        setSwatch(h);
         hexIn.value = h;
         hexIn.dataset.lastValid = h;
         hexIn.classList.remove("invalid");
@@ -1030,8 +1490,8 @@
       update();
     }
 
-    color.addEventListener("input", syncFromColor);
     hexIn.addEventListener("input", syncFromHex);
+    swatch.addEventListener("click", () => colorPicker.open(swatch, hexIn));
 
     upBtn.addEventListener("click", () => {
       const prev = div.previousElementSibling;
